@@ -13,7 +13,7 @@ services:
 
   broker:
     build: .
-    command: ["python", "-m", "app.broker"]
+    command: [ "python", "-m", "app.broker" ]
     ports:
       - "8765:8765"
     volumes:
