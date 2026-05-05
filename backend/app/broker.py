@@ -1,0 +1,128 @@
+import asyncio
+import json
+import logging
+from typing import Any
+import websockets
+from websockets import WebSocketServerProtocol
+from sqlalchemy.orm import Session
+from app.core.database import SessionLocal
+from app.models.job import Job
+from datetime import datetime
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("broker")
+
+WS_PORT = 8765
+
+
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+async def process_job(job: Job, db: Session):
+    logger.info(f"Starting job {job.id} type={job.type}")
+    job.status = "running"
+    job.started_at = datetime.utcnow()
+    db.add(job)
+    db.commit()
+
+    # simulate different job types
+    try:
+        if job.type == "sleep":
+            secs = job.payload.get("seconds", 1) if job.payload else 1
+            await asyncio.sleep(secs)
+        elif job.type == "send_email":
+            # simulate sending email; in real system integrate SMTP or external service
+            await asyncio.sleep(0.5)
+        elif job.type == "scrape_programs":
+            # placeholder for scraping
+            await asyncio.sleep(2)
+        else:
+            # unknown job type - quick no-op
+            await asyncio.sleep(0.1)
+        job.status = "finished"
+    except Exception as e:
+        job.status = "error"
+        logger.exception("Job processing failed")
+    finally:
+        job.finished_at = datetime.utcnow()
+        db.add(job)
+        db.commit()
+        logger.info(f"Finished job {job.id} status={job.status}")
+
+
+async def worker_loop(stop_event: asyncio.Event):
+    logger.info("Worker loop started")
+    while not stop_event.is_set():
+        db = SessionLocal()
+        try:
+            pending = db.query(Job).filter(Job.status == "pending").order_by(Job.created_at).limit(5).all()
+            if not pending:
+                await asyncio.sleep(0.5)
+                continue
+            tasks = []
+            for job in pending:
+                tasks.append(asyncio.create_task(process_job(job, db)))
+            if tasks:
+                await asyncio.gather(*tasks)
+        except Exception:
+            logger.exception("Worker loop error")
+        finally:
+            db.close()
+    logger.info("Worker loop stopped")
+
+
+class BrokerServer:
+    def __init__(self):
+        self.stop_event = asyncio.Event()
+
+    async def handler(self, websocket: WebSocketServerProtocol, path: str):
+        logger.info(f"Client connected: {websocket.remote_address}")
+        try:
+            async for message in websocket:
+                try:
+                    data = json.loads(message)
+                except Exception:
+                    await websocket.send(json.dumps({"error": "invalid json"}))
+                    continue
+                # Accept job submission
+                if data.get("action") == "submit_job":
+                    job_type = data.get("type")
+                    payload = data.get("payload")
+                    db = SessionLocal()
+                    job = Job(type=job_type, payload=payload, status="pending")
+                    db.add(job)
+                    db.commit()
+                    db.refresh(job)
+                    db.close()
+                    await websocket.send(json.dumps({"status": "submitted", "job_id": job.id}))
+                else:
+                    await websocket.send(json.dumps({"error": "unknown action"}))
+        except websockets.exceptions.ConnectionClosed:
+            logger.info("Client disconnected")
+
+    async def run(self):
+        logger.info(f"Starting broker websocket server on port {WS_PORT}")
+        stop_event = self.stop_event
+        server = await websockets.serve(self.handler, "0.0.0.0", WS_PORT)
+        worker = asyncio.create_task(worker_loop(stop_event))
+        await stop_event.wait()
+        worker.cancel()
+        server.close()
+        await server.wait_closed()
+
+
+def main():
+    broker = BrokerServer()
+    try:
+        asyncio.run(broker.run())
+    except KeyboardInterrupt:
+        logger.info("Broker stopping")
+
+
+if __name__ == "__main__":
+    main()

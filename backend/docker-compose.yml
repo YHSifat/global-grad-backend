@@ -11,6 +11,16 @@ services:
     depends_on:
       - postgres
 
+  broker:
+    build: .
+    command: ["python", "-m", "app.broker"]
+    ports:
+      - "8765:8765"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:17
     environment:
