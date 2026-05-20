@@ -7,3 +7,5 @@ python-jose
 pydantic
 websockets
 requests
+email-validator
+python-multipart
