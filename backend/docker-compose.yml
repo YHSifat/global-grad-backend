@@ -21,7 +21,7 @@ services:
   postgres:
     image: postgres:17
     environment:
-      POSTGRES_USER: admin
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: admission_platform
     ports:

@@ -28,8 +28,7 @@ class JobRead(BaseModel):
     payload: Any = None
     status: str
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 @router.post("/", response_model=JobRead)

@@ -15,5 +15,5 @@ class UniversityCreate(UniversityBase):
 
 class UniversityRead(UniversityBase):
     id: int
-    class Config:
-        orm_mode = True
+
+    model_config = {"from_attributes": True}
