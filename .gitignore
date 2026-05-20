@@ -1,8 +1,1 @@
 .venv/
-# Ignore Python cache folders
-__pycache__/
-
-# Ignore compiled Python files
-*.pyc
-*.pyo
-*.pyd
