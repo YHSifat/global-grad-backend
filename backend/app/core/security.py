@@ -13,7 +13,9 @@ SECRET_KEY = "change-me-to-a-secure-random-string"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt has a 72-byte password limit and can also be sensitive to backend
+# version mismatches; pbkdf2_sha256 avoids both issues for this project.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 

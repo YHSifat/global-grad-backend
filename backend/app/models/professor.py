@@ -16,6 +16,10 @@ class Professor(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     email = Column(String, nullable=True)
+    title = Column(String, nullable=True)
+    department = Column(String, nullable=True)
+    website = Column(String, nullable=True)
+    research_area = Column(String, nullable=True)
 
     university_id = Column(Integer, ForeignKey("universities.id"), nullable=True)
 

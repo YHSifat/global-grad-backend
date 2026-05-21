@@ -14,6 +14,8 @@ class Program(Base):
     name = Column(String, nullable=False)
 
     tuition = Column(Float)
+    duration = Column(String, nullable=True)
+    requirements = Column(String, nullable=True)
     deadline = Column(String)
 
     min_gpa = Column(Float, nullable=True)

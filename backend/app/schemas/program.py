@@ -5,6 +5,8 @@ from typing import Optional
 class ProgramBase(BaseModel):
     name: str
     tuition: Optional[float] = None
+    duration: Optional[str] = None
+    requirements: Optional[str] = None
     deadline: Optional[str] = None
     university_id: int
     min_gpa: Optional[float] = None

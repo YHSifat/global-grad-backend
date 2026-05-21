@@ -9,6 +9,8 @@ class University(Base):
     id = Column(Integer, primary_key=True)
 
     name = Column(String, nullable=False, unique=True)
+    ranking = Column(Integer, nullable=True)
+    location = Column(String, nullable=True)
     country = Column(String, nullable=True)
     city = Column(String, nullable=True)
     website = Column(String, nullable=True)
