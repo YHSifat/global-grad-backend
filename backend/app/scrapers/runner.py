@@ -1,3 +1,4 @@
+from time import perf_counter
 from typing import Dict, Iterable, List
 from sqlalchemy.orm import Session
 from app.models.university import University
@@ -8,6 +9,7 @@ from app.scrapers.base import ScrapedUniversity, UniversityScraper
 from app.scrapers.universities.unimelb import UniMelbScraper
 from app.scrapers.universities.oxford import OxfordScraper
 from app.scrapers.universities.nus import NusScraper
+from app.core.metrics import SCRAPE_DURATION_SECONDS, SCRAPE_RUNS_TOTAL
 
 SCRAPERS: Dict[str, type[UniversityScraper]] = {
     "unimelb": UniMelbScraper,
@@ -91,13 +93,22 @@ def upsert_scholarships(db: Session, university_id: int, scholarships: Iterable[
 
 
 def run_scraper(db: Session, source_key: str) -> dict:
-    scraper = get_scraper(source_key)
-    scraped = scraper.scrape()
-    university = upsert_university(db, scraped)
-    upsert_programs(db, university.id, scraped.programs)
-    upsert_professors(db, university.id, scraped.professors)
-    upsert_scholarships(db, university.id, scraped.scholarships)
-    return {"source": source_key, "university_id": university.id, "name": university.name}
+    started = perf_counter()
+    status = "success"
+    try:
+        scraper = get_scraper(source_key)
+        scraped = scraper.scrape()
+        university = upsert_university(db, scraped)
+        upsert_programs(db, university.id, scraped.programs)
+        upsert_professors(db, university.id, scraped.professors)
+        upsert_scholarships(db, university.id, scraped.scholarships)
+        return {"source": source_key, "university_id": university.id, "name": university.name}
+    except Exception:
+        status = "error"
+        raise
+    finally:
+        SCRAPE_RUNS_TOTAL.labels(source=source_key, status=status).inc()
+        SCRAPE_DURATION_SECONDS.labels(source=source_key, status=status).observe(perf_counter() - started)
 
 
 def run_scrapers(db: Session, source_keys: List[str]) -> List[dict]:

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.core import security
+from app.core.metrics import JOBS_CREATED_TOTAL
 from app.models.job import Job
 from app.routes.jobs import JobRead
 from pydantic import BaseModel
@@ -40,4 +41,5 @@ def trigger_university_scrape(
     db.add(job)
     db.commit()
     db.refresh(job)
+    JOBS_CREATED_TOTAL.labels(type="scrape_universities", source="api").inc()
     return job

@@ -2,6 +2,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
+from app.core.metrics import JOBS_CREATED_TOTAL
 from app.models.job import Job
 from pydantic import BaseModel
 from app.core import security
@@ -37,6 +38,7 @@ def create_job(j: JobCreate, db: Session = Depends(get_db), _=Depends(security.g
     db.add(job)
     db.commit()
     db.refresh(job)
+    JOBS_CREATED_TOTAL.labels(type=j.type, source="api").inc()
     return job
 
 
