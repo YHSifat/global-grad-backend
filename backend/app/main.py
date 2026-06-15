@@ -7,6 +7,7 @@ from prometheus_client import make_asgi_app
 from app.core.database import Base, engine
 from app.core.metrics import HTTP_REQUEST_DURATION_SECONDS, HTTP_REQUESTS_TOTAL
 
+from fastapi.middleware.cors import CORSMiddleware
 from app.models.user import User
 from app.models.program import Program
 from app.models.university import University
@@ -84,7 +85,13 @@ app = FastAPI()
 app.mount("/metrics", make_asgi_app())
 
 
-@app.middleware("http")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=False,  # Must be False if allow_origins=["*"]
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 async def record_http_metrics(request: Request, call_next):
     start_time = time.perf_counter()
     response = await call_next(request)

@@ -38,6 +38,31 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
+@router.post("/students", response_model=UserRead)
+def create_student(user: UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed = security.get_password_hash(user.password) if user.password else None
+    # Force role to student (regular user)
+    try:
+        student_role = Role.STUDENT
+    except AttributeError:
+        student_role = Role("student")
+    db_user = User(
+        name=user.name,
+        email=user.email,
+        hashed_password=hashed,
+        role=student_role,
+        gpa=user.gpa,
+        ielts=user.ielts,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 @router.get("/", response_model=List[UserRead])
 def list_users(role: Optional[RoleSchema] = None, db: Session = Depends(get_db)):
     # only admins may list all users
