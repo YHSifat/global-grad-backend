@@ -3,6 +3,8 @@ services:
     build: .
     ports:
       - "8000:8000"
+    environment:
+      BROKER_URL: ws://broker:8765
     volumes:
       - .:/app
     depends_on:
@@ -10,25 +12,38 @@ services:
 
   broker:
     build: .
-    command: ["python", "-m", "app.broker"]
+    command: ["python", "-m", "app.broker.broker"]
     ports:
       - "8765:8765"
+      - "8001:8001"
     volumes:
       - .:/app
     depends_on:
       - postgres
 
-  prometheus:
-    image: prom/prometheus:v2.55.1
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
-    depends_on:
-      - api
-      - broker
+  # prometheus:
+  #   image: prom/prometheus:v2.55.1
+  #   command:
+  #     - --config.file=/etc/prometheus/prometheus.yml
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #   ports:
+  #     - "9090:9090"
+  #   depends_on:
+  #     - api
+  #     - broker
+
+  # grafana:
+  #   image: grafana/grafana-oss:11.5.1
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   volumes:
+  #     - ./grafana/provisioning:/etc/grafana/provisioning:ro
+  #     - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+  #   depends_on:
+  #     - prometheus
 
   postgres:
     image: postgres:17

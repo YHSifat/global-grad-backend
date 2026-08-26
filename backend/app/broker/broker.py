@@ -98,7 +98,7 @@ class BrokerServer:
     def __init__(self):
         self.stop_event = asyncio.Event()
 
-    async def handler(self, websocket: WebSocketServerProtocol, path: str):
+    async def handler(self, websocket: WebSocketServerProtocol):
         logger.info(f"Client connected: {websocket.remote_address}")
         try:
             async for message in websocket:

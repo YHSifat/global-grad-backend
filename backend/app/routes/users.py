@@ -64,14 +64,16 @@ def create_student(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[UserRead])
-def list_users(role: Optional[RoleSchema] = None, db: Session = Depends(get_db)):
-    # only admins may list all users
-    _ = Depends(security.get_current_active_admin)
+def list_users(role: Optional[RoleSchema] = None, db: Session = Depends(get_db), _: TokenData = Depends(security.get_current_active_admin)):
     q = db.query(User)
     if role:
         role_value = role.value if hasattr(role, "value") else role
         q = q.filter(User.role == Role(role_value))
     return q.all()
+
+@router.get("/me", response_model=UserRead)
+def read_current_user(current_user = Depends(security.get_current_user)):
+    return current_user
 
 
 @router.get("/{user_id}", response_model=UserRead)
@@ -80,11 +82,6 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
-
-
-@router.get("/me", response_model=UserRead)
-def read_current_user(current_user = Depends(security.get_current_user)):
-    return current_user
 
 
 @router.delete("/{user_id}")

@@ -7,7 +7,6 @@ PROGRAM_KEYWORDS = ["program", "course", "study", "degree", "master", "bachelor"
 PROFESSOR_KEYWORDS = ["staff", "people", "academics", "research", "faculty"]
 SCHOLARSHIP_KEYWORDS = ["scholarship", "grant", "award", "funding", "bursary"]
 
-
 class UniMelbScraper(UniversityScraper):
     source_key = "unimelb"
     source_url = "https://www.unimelb.edu.au/"
@@ -15,6 +14,8 @@ class UniMelbScraper(UniversityScraper):
     def scrape(self) -> ScrapedUniversity:
         html = fetch_html(self.source_url)
         text = soup_text(html)
+        print("fetched html:", html[:500])
+        print("fethced text", text[:500])
         title = page_title(html, default="University of Melbourne") or "University of Melbourne"
 
         program_links = internal_links_by_keywords(html, self.source_url, PROGRAM_KEYWORDS, limit=5)
