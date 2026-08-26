@@ -21,29 +21,29 @@ services:
     depends_on:
       - postgres
 
-  # prometheus:
-  #   image: prom/prometheus:v2.55.1
-  #   command:
-  #     - --config.file=/etc/prometheus/prometheus.yml
-  #   volumes:
-  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-  #   ports:
-  #     - "9090:9090"
-  #   depends_on:
-  #     - api
-  #     - broker
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+      - broker
 
-  # grafana:
-  #   image: grafana/grafana-oss:11.5.1
-  #   ports:
-  #     - "3001:3000"
-  #   environment:
-  #     - GF_SECURITY_ADMIN_PASSWORD=admin
-  #   volumes:
-  #     - ./grafana/provisioning:/etc/grafana/provisioning:ro
-  #     - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-  #   depends_on:
-  #     - prometheus
+  grafana:
+    image: grafana/grafana-oss:11.5.1
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
 
   postgres:
     image: postgres:17
